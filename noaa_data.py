@@ -5,13 +5,10 @@ import pandas as pd
 import os
 import numpy as np
 import glob
-from datetime import datetime
 
 #Set baseline path
 path0 = "/home/jtb188/Documents/NOAA_data/"
 os.chdir(path0)
-
-eqcols = lambda x,y: (y[x].columns==y[x+1].columns).all()
 
 keepcols = ['LATITUDE','LONGITUDE','DEPTH','TIMESTAMP','TEMP_C']
 
@@ -24,7 +21,6 @@ del american_samoa
 #Read in Batangas data
 batangas = pd.read_csv("batangas_philippines_temps/1.1/data/0-data/MV_OCN_STR_TIMESERIES_Philippines.csv")
 batangas = batangas.rename(columns={'TEMPERATURE':'TEMP_C'})
-
 dummy = batangas['YEAR'].astype(str)+ batangas['MONTH'].astype(str).str.zfill(2) + batangas['DAY'].astype(str).str.zfill(2) +batangas['HOUR'].astype(str).str.zfill(2) +batangas['MINUTE'].astype(str).str.zfill(2)+batangas['SECOND'].astype(str).str.zfill(2) 
 batangas['TIMESTAMP'] = pd.to_datetime(dummy,format='%Y%m%d%H%M%S')
 noaa_batangas = batangas[keepcols]
@@ -102,7 +98,6 @@ dummy = stcroix['TIMESTAMP'] + "_" + stcroix['HOUR']
 stcroix['TIMESTAMP'] = pd.to_datetime(dummy,format='%m/%d/%y_%H:%M:%S',errors='coerce')
 
 noaa_stcroix = stcroix[keepcols]
-
 del stcroix_1,stcroix_2,stcroix_3,stcroix_4,stcroix_5,dummy,stcroix
 
 #Read in St John data
@@ -187,3 +182,6 @@ noaa_keys = florida_keys[keepcols]
 del keys_low,keys_mid,keys_upp,path,dummy,florida_keys
 
 noaa = [noaa_amsam,noaa_batangas,noaa_biscayne,noaa_hawaii,noaa_keys,noaa_marianas,noaa_pria,noaa_pr,noaa_stcroix,noaa_stjohn,noaa_stthomas,noaa_timorleste,noaa_wake]
+
+for i in np.arange(0,len(noaa),1):
+    noaa[i]['POINTS'] = noaa[i]['LONGITUDE'].astype(str) + "_" + noaa[i]['LATITUDE'].astype(str)
