@@ -132,8 +132,8 @@ sol_gpd.crs = {'init': 'EPSG:4326'}
 
 sol_join  = gpd.sjoin(sol_gpd,solomon_geo,how='inner',op='intersects')
 sol_join['RCLASS'] = sol_join['class']
-sol_join = sol_join.drop(['class'],axis=1)
-sol_join.to_csv('sol_join.csv',index=False)
+solomon_join = sol_join.drop(['class'],axis=1)
+solomon_join.to_csv('solomon_join.csv',index=False)
 
 #Coral Sea
 fiona.listlayers('coralsea_geo.gpkg')
@@ -152,8 +152,8 @@ cor_gpd.crs = {'init':'EPSG:4326'}
 
 cor_join = gpd.sjoin(cor_gpd,coral_geo,how='inner',op='intersects')
 cor_join['RCLASS'] = cor_join['class']
-cor_join = cor_join.drop(['class'],axis=1)
-cor_join.to_csv('coralsea_join.csv',index=False)
+coralsea_join = cor_join.drop(['class'],axis=1)
+coralsea_join.to_csv('coralsea_join.csv',index=False)
 
 #Western Australia
 fiona.listlayers('westaustralia_geo.gpkg')
@@ -172,5 +172,7 @@ west_gpd.crs = {'init':'EPSG:4326'}
 
 west_join = gpd.sjoin(west_gpd,westaustralia_geo,how='inner',op='intersects')
 west_join['RCLASS'] = west_join['class']
-west_join = west_join.drop(['class'],axis=1)
-west_join.to_csv('westaustralia_join.csv',index=False)
+westaus_join = west_join.drop(['class'],axis=1)
+westaus_join.to_csv('westaustralia_join.csv',index=False)
+
+geo_merges = [hawaii_join,marianas_join,flkeys_join,timorleste_join,gbr_join,tim_join,solomon_join,coralsea_join,westaus_join]
