@@ -139,11 +139,13 @@ solomon_join.to_csv('solomon_join.csv',index=False)
 fiona.listlayers('coralsea_geo.gpkg')
 coral_geo = gpd.read_file('coralsea_geo.gpkg',layer='Coral Sea')
 
-lonfilt = lambda x: aims[x].loc[aims[x]['LONGITUDE'] > 145.0]
-latfilt = lambda x: aims_cor[x].loc[aims_cor[x]['LATITUDE'] < -13.0]
+lonfilt = lambda x: aims[x].loc[aims[x]['LONGITUDE'] > 146.2]
+latfilt = lambda x: aims_cor[x].loc[aims_cor[x]['LATITUDE'] < -13.5]
+latfilt2 = lambda x: aims_cor[x].loc[aims_cor[x]['LATITUDE'] > -25.6]
 
 aims_cor= [lonfilt(i) for i in np.arange(0,12,1)]
 aims_cor= [latfilt(i) for i in np.arange(0,12,1)]
+aims_cor= [latfilt2(i) for i in np.arange(0,12,1)]
 
 aims_cor = pd.concat(aims_cor)
 
