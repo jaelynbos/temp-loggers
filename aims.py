@@ -11,7 +11,7 @@ import glob
 import numpy as np
 from datetime import datetime
 
-path0 = "/home/jtb188/Documents/aims/"
+path0 = "/home/jtb188/Documents/aims/aims_csvs/"
 os.chdir(path0)
 
 aims_data = ([pd.read_csv(f) for f in glob.glob("*.csv")])
@@ -53,3 +53,7 @@ for i in np.arange(0,12,1):
     
 aims = aims_filt
 del aims_filt
+
+#Export to pickle
+for i in np.arange(0,len(aims),1):
+    aims[i].to_pickle('aims'+str(i)+'.pkl')

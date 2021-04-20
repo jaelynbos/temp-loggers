@@ -15,8 +15,18 @@ marianas_join = pd.read_csv('marianas_join.csv')
 flkeys_join = pd.read_csv('floridakeys_join.csv')
 timorleste_join = pd.read_csv('timorleste_join.csv')
 
+os.chdir('/home/jtb188/Documents/allen_coral_atlas/agg_merge')
+
+solomon = pd.read_pickle('solomon.pkl')
+
 #MMM and dailydiff from geomorphic merge sets
-geo_merges = [hawaii_join,marianas_join,flkeys_join,timorleste_join]
+geo_merges = [solomon,timorsea,coralsea,westaus]
+
+for i in np.arange(0,len(geo_merges),1):
+    geo_merges[i]['TIMESTAMP'] = pd.to_datetime(geo_merges[i]['TIMESTAMP'])
+
+for i in np.arange(0,len(geo_merges),1):
+    geo_merges[i]['RCLASS'] = geo_merges[i]['class']
     
 points_u = [None]*len(geo_merges)
 for i in np.arange(0,len(geo_merges),1):
@@ -34,7 +44,6 @@ for i in np.arange(0,len(geo_merges),1):
 #Aggregate by month
 
 for i in np.arange(0,len(geo_merges),1):
-    geo_merges[i]['TIMESTAMP'] = pd.to_datetime(geo_merges[i]['TIMESTAMP'])
     geo_merges[i]['MONTH'] = geo_merges[i]['TIMESTAMP'].dt.month
     
 a = {'DAILY_DIFF': ['mean'],'TEMP_C': ['mean'],'LONGITUDE':['median'],'LATITUDE':['median'],'DEPTH':['median'],'RCLASS':['first'],'COORDS':['first']}
@@ -50,4 +59,3 @@ def mmm_select(region,regional_points):
     return(pd.concat([maxsel(sitesel(region,regional_points[i])) for i in np.arange(0,len(regional_points),1)]).reset_index())
 
 MMMs = [mmm_select(geo_merges[i],points_u[i]) for i in np.arange(0,len(geo_merges),1)]
-
