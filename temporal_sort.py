@@ -30,28 +30,6 @@ points_u = [None]*len(geo_agg)
 for i in np.arange(0,len(geo_agg),1):
     points_u[i] = pd.Series(geo_agg[i]['POINTS'].unique())
 
-for i in np.arange(0,len(geo_agg),1):
-    geo_agg[i]['YRMONTH'] = geo_agg[i]['TIMESTAMP'].dt.year.astype('str') + '/' + geo_agg[i]['TIMESTAMP'].dt.month.astype('str')
-    
-def monthsinsite(site):
-    mo = site['YRMONTH'].unique()
-    return([site[site['YRMONTH']==mo[i]] for i in np.arange(0,len(mo),1)])
-        
-def daysinmonth(site_month):
-    x = len(site_month['DATE'].unique())
-    if x > 27: 
-        return (True)
-    else:
-        return (False)
-
-def ntrue(point):
-    y = pd.Series([daysinmonth(monthsinsite(point)[i]) for i in np.arange(0,len(monthsinsite(point)),1)])
-    return(y.value_counts())
-
-def complete_months(df,points_u):
-    cm = [ntrue(df[df['POINTS'] == points_u[i]]) for i in np.arange(0,len(points_u),1)]
-    return(cm)
-
 def time_step(logger):
     logger = logger.sort_values(by=['TIMESTAMP']).reset_index()
     ts = [logger['TIMESTAMP'][i+1] - logger['TIMESTAMP'][i] for i in np.arange(0,(len(logger)-1),1)]
@@ -60,10 +38,6 @@ def time_step(logger):
     #x.set(xlim=(0,60))
     #return(x)
     return(['median =', np.median(ts), 'mean =', np.mean(ts),'min=', min(ts),'max = ', max(ts)])
-
-##################################################################
-#
-###################################################################
 
 ###################################################################
 #Downsample to every 30 minutes
@@ -76,7 +50,9 @@ def thirtyminsample(region,region_points):
     region = region.set_index('TIMESTAMP')
     x = [region[region['POINTS'] == region_points[i]] for i in np.arange(0,len(region_points),1)]
     y = [x[i].resample('30T').first() for i in np.arange(0,len(x),1)]
-    return(pd.concat(y))
+    y = pd.concat(y)
+    y = y.dropna(axis=0)
+    return(y)
 
 geo_downsample = [thirtyminsample(geo_data[j],points_u[j]) for j in np.arange(0,len(geo_data),1)]
 
@@ -99,9 +75,73 @@ timorsea_ds.to_pickle('timorsea_ds.pkl')
 westaus_ds = geo_downsample[9]
 westaus_ds.to_pickle('westaus_ds.pkl')
 
+geopath = '/home/jtb188/Documents/'
+geo_downsample = [pd.read_pickle(f) for f in sorted(glob.glob(geopath + "*pkl"))]
+
+###################################################################
+#Complete days
+###################################################################
+#isday
+    
+for i in np.arange(0,len(geo_downsample),1):
+    geo_downsample[i]['RCLASS'] = geo_downsample[i]['class']
+    geo_downsample[i]['TIMESTAMP'] = pd.to_datetime(geo_downsample[i].index)
+    geo_downsample[i] = geo_downsample[i].drop(columns=['class','index_right'])
+
+for i in np.arange(0,len(geo_downsample),1):
+    geo_downsample[i]['DATE'] = geo_downsample[i]['TIMESTAMP'].dt.date
+
+def isday(timestamp):
+    if ((timestamp.hour) > 6 and (timestamp.hour)<18):
+        return ('DAY')
+    else:
+        return('NIGHT')
+
+def completeday(region,row):
+    site = region[region['POINTS'] == row['POINTS']]
+    day = site[site['DATE'] == row['DATE']]['TIMESTAMP']
+    x = [isday(day[i]) for i in np.arange(0,len(day),1)]
+    d = sum(x[i] == 'DAY' for i in np.arange(0,len(x),1))
+    n = sum(x[i] == 'NIGHT' for i in np.arange(0,len(x),1))
+    if (d > 1 and n >1):
+        return(True)
+    else:
+        return(False)
+
+#dummy = geo_downsample[0][geo_downsample[0]['POINTS']==points_u[0][0]]
+
+dum = [completeday(geo_downsample[0],geo_downsample[0].iloc[i]) for i in np.arange(0,len(geo_downsample[0]),1)]
+
+keep_rows = [None]*len(geo_downsample)
+for j in np.arange(0,len(geo_downsample),1):
+    keep_rows[j] = pd.Series([completeday(geo_downsample[j],geo_downsample[j].iloc[i]) for i in np.arange(0,len(geo_downsample[j]),1)])
+
 ####################################################################
 #Complete months
 ###################################################################
+
+for i in np.arange(0,len(geo_agg),1):
+    geo_agg[i]['YRMONTH'] = geo_agg[i]['TIMESTAMP'].dt.year.astype('str') + '/' + geo_agg[i]['TIMESTAMP'].dt.month.astype('str')
+    
+def monthsinsite(site):
+    mo = site['YRMONTH'].unique()
+    return([site[site['YRMONTH']==mo[i]] for i in np.arange(0,len(mo),1)])
+        
+def daysinmonth(site_month):
+    x = len(site_month['DATE'].unique())
+    if x > 27: 
+        return (True)
+    else:
+        return (False)
+
+def ntrue(point):
+    y = pd.Series([daysinmonth(monthsinsite(point)[i]) for i in np.arange(0,len(monthsinsite(point)),1)])
+    return(y.value_counts())
+
+def complete_months(df,points_u):
+    cm = [ntrue(df[df['POINTS'] == points_u[i]]) for i in np.arange(0,len(points_u),1)]
+    return(cm)
+
 
 ###################################################################
 #MMMs
@@ -153,6 +193,33 @@ for i in np.arange(0,len(MMMs),1):
     MMMs[i].columns = ['level_0','index','MONTH','POINTS','DAILY_DIFF','TEMP_C','LONGITUDE','LATITUDE','DEPTH','RCLASS','COORDS']
     MMMs[i] = pd.DataFrame(MMMs[i])
 
+MMMs = pd.concat(MMMs)
+#################################################################
+#Prep data to grab SSTs
+#################################################################
+
+#Need: lat, lon, month, start, end
+
+sst_points = MMMs.copy()
+
+for i in np.arange(0,len(sst_points),1):
+    sst_points[i] = sst_points[i].drop(columns=['level_0','DAILY_DIFF','TEMP_C','DEPTH','RCLASS'])
+    
+starts = [geo_downsample[j].groupby(['POINTS'])['TIMESTAMP'].min().to_frame().reset_index() for j in np.arange(0,len(geo_downsample),1)]
+for i in np.arange(0,len(starts),1):
+    starts[i].columns = ['POINTS','START_TIME']
+
+ends = [geo_downsample[j].groupby(['POINTS'])['TIMESTAMP'].max().to_frame().reset_index() for j in np.arange(0,len(geo_downsample),1)]
+for i in np.arange(0,len(ends),1):
+    ends[i].columns = ['POINTS','END_TIME']
+    
+for i in np.arange(0,len(sst_points),1):
+    sst_points[i] = pd.merge(sst_points[i],starts[i])
+    sst_points[i] = pd.merge(sst_points[i],ends[i])
+    
+all_sst_points = pd.concat(sst_points)
+
+all_sst_points.to_csv('all_sst_points.csv')
 ###############################################################
 #Some boxplots
 ##############################################################
@@ -221,7 +288,15 @@ scat.set_ylabel('MMM in degrees C')
 scat.set_xlabel('Logger depth in meters')
 scat.set_title('Depth vs MMM all Australia')
 
+scat = sns.scatterplot(y='TEMP_C',x='DAILY_DIFF',data=Aus_MMMs,hue='RCLASS',palette=rclass_col)
+scat.set_ylabel('MMM in degrees C')
+scat.set_xlabel('Mean daily temperature flux in hottest month')
+scat.get_legend().remove()
+scat.set_title('Daily temp diff vs MMM all Australia')
+
+
 scat = sns.scatterplot(y='TEMP_C',x='DEPTH',data=MMMs[3])
 scat.set_ylabel('MMM in degrees C')
 scat.set_xlabel('Logger depth in meters')
 scat.set_title('Depth vs MMM Hawaii')
+
