@@ -71,6 +71,7 @@ hawaii_geo = gpd.read_file('hawaii_geo.geojson')
 flkeys_geo = gpd.read_file('flkeys_geo.geojson')
 fiona.listlayers('swpacific_geo.gpkg')
 swpacific_geo = gpd.read_file('swpacific_geo.gpkg',layer='Southwestern Pacific')
+secaribbean_geo = gpd.read_file('secarib_geo.gpkg',layer='Southeastern Caribbean')
 
 #Dealing with the GBR data size problem
 gbr_geo1 = gbr_geo.iloc[0:158674,:]
@@ -88,7 +89,9 @@ westaus = remerge(pd.DataFrame(gpd.sjoin(aims_agg,westaustralia_geo,how='inner',
 hawaii = remerge(pd.DataFrame(gpd.sjoin(noaa_agg,hawaii_geo,how='inner',op='within')),noaa)
 flkeys = remerge(pd.DataFrame(gpd.sjoin(noaa_agg,flkeys_geo,how='inner',op='within')),noaa)
 swpacific = remerge(pd.DataFrame(gpd.sjoin(noaa_agg,swpacific_geo,how='inner',op='within')),noaa)
+secarib = remerge(pd.DataFrame(gpd.sjoin(noaa_agg,secaribbean_geo,how='inner',op='within')),noaa)
 del gbr_geo, timor_geo,solomon_geo,coral_geo,westaustralia_geo
+
 
 #and pickling
 os.chdir('/home/jtb188/Documents/allen_coral_atlas/agg_merge/')
@@ -102,6 +105,7 @@ gbr1 = pd.concat(gbr1)
 gbr2 = pd.concat(gbr2)
 gbr3 = pd.concat(gbr3)
 swpacific = pd.concat(swpacific)
+secarib = pd.concat(secarib)
 
 timorsea.to_pickle('timorsea.pkl')
 solomon.to_pickle('solomon.pkl')
@@ -113,3 +117,4 @@ gbr1.to_pickle('gbr1.pkl')
 gbr2.to_pickle('gbr2.pkl')
 gbr3.to_pickle('gbr3.pkl')
 swpacific.to_pickle('swpacific.pkl')
+secarib.to_pickle('secarib.pkl')
