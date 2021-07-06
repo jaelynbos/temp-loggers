@@ -195,3 +195,53 @@ Create single dataframe with MMMs for all regions
 MMMs_all = pd.concat(MMMs)
 
 MMMs_all.to_csv('MMMs.csv')
+
+'''
+Make CSV to use in grabbing SST values from NASA server
+'''
+sst_points = MMMs.copy()
+
+'Drop unnecessary columns'
+for i in np.arange(0,len(sst_points),1):
+    sst_points[i]= sst_points[i].drop(columns=['level_0','DAILY_DIFF','TEMP_C','DEPTH','RCLASS'])
+    
+starts = [geo_ds[j].groupby(['POINTS'])['TIMESTAMP'].min().to_frame().reset_index() for j in np.arange(0,len(geo_ds),1)]
+for i in np.arange(0,len(starts),1):
+    starts[i].columns = ['POINTS','START_TIME']
+
+ends = [geo_ds[j].groupby(['POINTS'])['TIMESTAMP'].max().to_frame().reset_index() for j in np.arange(0,len(geo_ds),1)]
+for i in np.arange(0,len(ends),1):
+    ends[i].columns = ['POINTS','END_TIME']
+    
+for i in np.arange(0,len(sst_points),1):
+    sst_points[i] = pd.merge(sst_points[i],starts[i])
+    sst_points[i] = pd.merge(sst_points[i],ends[i])
+    
+all_sst_points = pd.concat(sst_points)
+
+all_sst_points.to_csv('all_sst_points.csv')
+
+"""
+CALCULATE SSTs FROM NASA SERVER
+"""
+'''
+Import SST data (generated on NASA server)
+'''
+
+sst_data = pd.read_csv('sst_data.csv')
+
+all_sst_points = all_sst_points.reset_index()
+sst_data = sst_data.reset_index()
+
+all_sst_points['SST_MMM'] = sst_data['SST_MMM'] - 273
+all_sst_points['SST_MAX'] = sst_data['SST_MAX'] - 273
+all_sst_points['SST_MIN'] = sst_data['SST_MIN'] - 273
+
+all_sst_points = all_sst_points.drop(columns=['MONTHS','LONGITUDE','LATITUDE','COORDS'])
+
+'''
+Merge SST and logger data
+'''
+Merged_SST = pd.merge(MMMs_all,all_sst_points,how='left',on='POINTS')
+
+Merged_SST.to_csv('merged_temps.csv')
