@@ -5,6 +5,7 @@ import pandas as pd
 import os
 import numpy as np
 import glob
+import pickle 
 
 #Set baseline path
 path0 = "/home/jtb188/Documents/NOAA_data/"
@@ -185,3 +186,17 @@ noaa = [noaa_amsam,noaa_batangas,noaa_biscayne,noaa_hawaii,noaa_keys,noaa_marian
 
 for i in np.arange(0,len(noaa),1):
     noaa[i]['POINTS'] = noaa[i]['LONGITUDE'].astype(str) + "_" + noaa[i]['LATITUDE'].astype(str)
+    
+noaa[0].to_pickle('amsam.pkl')
+noaa[1].to_pickle('batangas.pkl')
+noaa[2].to_pickle('biscayne.pkl')
+noaa[3].to_pickle('hawaii.pkl')
+noaa[4].to_pickle('flkeys.pkl')
+noaa[5].to_pickle('marianas.pkl')
+noaa[6].to_pickle('pria.pkl')
+noaa[7].to_pickle('puertorico.pkl')
+noaa[8].to_pickle('stcroix.pkl')
+noaa[9].to_pickle('stjohn.pkl')
+noaa[10].to_pickle('stthomas.pkl')
+noaa[11].to_pickle('timorleste.pkl')
+noaa[10].to_pickle('wake.pkl')
